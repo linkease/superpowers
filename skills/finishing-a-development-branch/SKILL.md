@@ -141,13 +141,16 @@ If execution happened in-place, there is no workspace cleanup step.
 
 If using an externally managed linked worktree, do not remove it unless the user explicitly asks.
 
-If using a removable worktree created for this task, check whether the current directory is such a worktree:
+If using a removable worktree created for this task, compare the current working directory against the worktree list:
 
 ```bash
-git worktree list | grep $(git branch --show-current)
+CURRENT_PATH=$(pwd -P)
+git worktree list --porcelain
 ```
 
-If yes:
+Only remove the workspace if the current path matches a removable linked worktree. Do NOT remove the primary checkout. Do NOT infer removability from branch name alone.
+
+If the current path is a removable linked worktree:
 ```bash
 git worktree remove <worktree-path>
 ```
