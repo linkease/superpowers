@@ -1,5 +1,7 @@
 # Codex App Compatibility: Worktree and Finishing Skill Adaptation
 
+> **Migration note (2026-03-27):** This design predates the workspace-isolation migration. `ensure-isolated-workspace` is now the preferred workspace-setup skill. References to `using-git-worktrees` in this document are historical unless a compatibility path is specifically being discussed.
+
 Make superpowers skills work in the Codex App's sandboxed worktree environment without breaking existing Claude Code or Codex CLI behavior.
 
 **Ticket:** PRI-823

@@ -64,6 +64,13 @@ Skills are discovered automatically. Codex activates them when:
 - The task matches a skill's description
 - The `using-superpowers` skill directs Codex to use one
 
+For implementation work, the preferred workspace concept is now `ensure-isolated-workspace`:
+- reuse an existing linked worktree when one already exists
+- allow clean in-place execution for small safe tasks
+- create a worktree only when isolation is actually needed
+
+`using-git-worktrees` remains available as a compatibility skill for older prompts and docs, but it is no longer the preferred primary workflow.
+
 ### Personal Skills
 
 Create your own skills in `~/.agents/skills/`:

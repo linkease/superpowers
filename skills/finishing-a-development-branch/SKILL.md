@@ -9,7 +9,7 @@ description: Use when implementation is complete, all tests pass, and you need t
 
 Guide completion of development work by presenting clear options and handling chosen workflow.
 
-**Core principle:** Verify tests → Present options → Execute choice → Clean up.
+**Core principle:** Verify tests → Present options → Execute choice → Clean up when applicable.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
@@ -84,7 +84,7 @@ git merge <feature-branch>
 git branch -d <feature-branch>
 ```
 
-Then: Cleanup worktree (Step 5)
+Then: Cleanup workspace if applicable (Step 5)
 
 #### Option 2: Push and Create PR
 
@@ -103,13 +103,13 @@ EOF
 )"
 ```
 
-Then: Cleanup worktree (Step 5)
+Then: Cleanup workspace if applicable (Step 5)
 
 #### Option 3: Keep As-Is
 
-Report: "Keeping branch <name>. Worktree preserved at <path>."
+Report: "Keeping branch <name>. Workspace preserved at <path-or-current-directory>."
 
-**Don't cleanup worktree.**
+**Don't cleanup the workspace.**
 
 #### Option 4: Discard
 
@@ -118,7 +118,7 @@ Report: "Keeping branch <name>. Worktree preserved at <path>."
 This will permanently delete:
 - Branch <name>
 - All commits: <commit-list>
-- Worktree at <path>
+- Removable worktree at <path> (if applicable)
 
 Type 'discard' to confirm.
 ```
@@ -131,13 +131,18 @@ git checkout <base-branch>
 git branch -D <feature-branch>
 ```
 
-Then: Cleanup worktree (Step 5)
+Then: Cleanup workspace if applicable (Step 5)
 
-### Step 5: Cleanup Worktree
+### Step 5: Cleanup Workspace
 
 **For Options 1, 2, 4:**
 
-Check if in worktree:
+If execution happened in-place, there is no workspace cleanup step.
+
+If using an externally managed linked worktree, do not remove it unless the user explicitly asks.
+
+If using a removable worktree created for this task, check whether the current directory is such a worktree:
+
 ```bash
 git worktree list | grep $(git branch --show-current)
 ```
@@ -147,12 +152,12 @@ If yes:
 git worktree remove <worktree-path>
 ```
 
-**For Option 3:** Keep worktree.
+**For Option 3:** Keep the workspace as-is.
 
 ## Quick Reference
 
-| Option | Merge | Push | Keep Worktree | Cleanup Branch |
-|--------|-------|------|---------------|----------------|
+| Option | Merge | Push | Keep Workspace | Cleanup Branch |
+|--------|-------|------|----------------|----------------|
 | 1. Merge locally | ✓ | - | - | ✓ |
 | 2. Create PR | - | ✓ | ✓ | - |
 | 3. Keep as-is | - | - | ✓ | - |
@@ -168,9 +173,9 @@ git worktree remove <worktree-path>
 - **Problem:** "What should I do next?" → ambiguous
 - **Fix:** Present exactly 4 structured options
 
-**Automatic worktree cleanup**
-- **Problem:** Remove worktree when might need it (Option 2, 3)
-- **Fix:** Only cleanup for Options 1 and 4
+**Automatic workspace cleanup**
+- **Problem:** Remove a workspace that is still needed, or try to remove one that was never created
+- **Fix:** Only remove a worktree when one actually exists and is safe to remove
 
 **No confirmation for discard**
 - **Problem:** Accidentally delete work
@@ -188,7 +193,7 @@ git worktree remove <worktree-path>
 - Verify tests before offering options
 - Present exactly 4 options
 - Get typed confirmation for Option 4
-- Clean up worktree for Options 1 & 4 only
+- Only remove a worktree when it exists and cleanup is appropriate
 
 ## Integration
 
@@ -197,4 +202,4 @@ git worktree remove <worktree-path>
 - **executing-plans** (Step 5) - After all batches complete
 
 **Pairs with:**
-- **using-git-worktrees** - Cleans up worktree created by that skill
+- **ensure-isolated-workspace** - Completes work whether execution happened in-place or in a worktree

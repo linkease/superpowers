@@ -102,7 +102,7 @@ Start a new session in your chosen platform and ask for something that should tr
 
 1. **brainstorming** - Activates before writing code. Refines rough ideas through questions, explores alternatives, presents design in sections for validation. Saves design document.
 
-2. **using-git-worktrees** - Activates after design approval. Creates isolated workspace on new branch, runs project setup, verifies clean test baseline.
+2. **ensure-isolated-workspace** - Activates after design approval. Reuses an existing isolated workspace, allows clean in-place work for small safe tasks, or creates a worktree when isolation is needed. Runs project setup and verifies a clean baseline.
 
 3. **writing-plans** - Activates with approved design. Breaks work into bite-sized tasks (2-5 minutes each). Every task has exact file paths, complete code, verification steps.
 
@@ -112,7 +112,7 @@ Start a new session in your chosen platform and ask for something that should tr
 
 6. **requesting-code-review** - Activates between tasks. Reviews against plan, reports issues by severity. Critical issues block progress.
 
-7. **finishing-a-development-branch** - Activates when tasks complete. Verifies tests, presents options (merge/PR/keep/discard), cleans up worktree.
+7. **finishing-a-development-branch** - Activates when tasks complete. Verifies tests, presents options (merge/PR/keep/discard), and cleans up the workspace when applicable.
 
 **The agent checks for relevant skills before any task.** Mandatory workflows, not suggestions.
 
@@ -134,7 +134,8 @@ Start a new session in your chosen platform and ask for something that should tr
 - **dispatching-parallel-agents** - Concurrent subagent workflows
 - **requesting-code-review** - Pre-review checklist
 - **receiving-code-review** - Responding to feedback
-- **using-git-worktrees** - Parallel development branches
+- **ensure-isolated-workspace** - Safe workspace setup and isolation decisions
+- **using-git-worktrees** - Deprecated compatibility alias for older worktree-based workflows
 - **finishing-a-development-branch** - Merge/PR decision workflow
 - **subagent-driven-development** - Fast iteration with two-stage review (spec compliance, then code quality)
 

@@ -1,218 +1,70 @@
 ---
 name: using-git-worktrees
-description: Use when starting feature work that needs isolation from current workspace or before executing implementation plans - creates isolated git worktrees with smart directory selection and safety verification
+description: Deprecated compatibility skill for older workflows that still ask for git worktrees - forwards to ensure-isolated-workspace and prefers worktree creation when isolation is needed
 ---
 
 # Using Git Worktrees
 
-## Overview
+This skill remains only as a compatibility entrypoint for older prompts, plans, and documentation.
 
-Git worktrees create isolated workspaces sharing the same repository, allowing work on multiple branches simultaneously without switching.
+**New primary skill:** `ensure-isolated-workspace`
 
-**Core principle:** Systematic directory selection + safety verification = reliable isolation.
+**Announce at start:** "I'm using the using-git-worktrees skill as a compatibility path. I'll use ensure-isolated-workspace to choose the right workspace mode."
 
-**Announce at start:** "I'm using the using-git-worktrees skill to set up an isolated workspace."
+## Compatibility Policy
 
-## Directory Selection Process
+When this skill is invoked:
 
-Follow this priority order:
+1. Treat the request as a request for safe workspace isolation
+2. Immediately invoke `ensure-isolated-workspace`
+3. If isolation is needed and the user has not said otherwise, prefer creating a worktree
+4. If an existing linked worktree is already present, reuse it
+5. If a clean in-place workspace is sufficient and the user explicitly prefers not to use worktrees, allow that path
 
-### 1. Check Existing Directories
+Do not maintain a second, separate worktree-creation policy here. The authoritative behavior now lives in `ensure-isolated-workspace`.
 
-```bash
-# Check in priority order
-ls -d .worktrees 2>/dev/null     # Preferred (hidden)
-ls -d worktrees 2>/dev/null      # Alternative
-```
+## Migration Note
 
-**If found:** Use that directory. If both exist, `.worktrees` wins.
+For new workflows:
 
-### 2. Check CLAUDE.md
+- use `ensure-isolated-workspace`
+- do not introduce new references to `using-git-worktrees`
 
-```bash
-grep -i "worktree.*director" CLAUDE.md 2>/dev/null
-```
+For old workflows:
 
-**If preference specified:** Use it without asking.
+- keep this skill working as a compatibility alias
+- bias toward worktree creation only when isolation is actually needed
 
-### 3. Ask User
+## Why This Changed
 
-If no directory exists and no CLAUDE.md preference:
+The project now distinguishes between:
 
-```
-No worktree directory found. Where should I create worktrees?
+- reusing an existing isolated workspace
+- allowing safe in-place work for small clean tasks
+- creating a worktree when risk or coordination requires it
 
-1. .worktrees/ (project-local, hidden)
-2. ~/.config/superpowers/worktrees/<project-name>/ (global location)
-
-Which would you prefer?
-```
-
-## Safety Verification
-
-### For Project-Local Directories (.worktrees or worktrees)
-
-**MUST verify directory is ignored before creating worktree:**
-
-```bash
-# Check if directory is ignored (respects local, global, and system gitignore)
-git check-ignore -q .worktrees 2>/dev/null || git check-ignore -q worktrees 2>/dev/null
-```
-
-**If NOT ignored:**
-
-Per Jesse's rule "Fix broken things immediately":
-1. Add appropriate line to .gitignore
-2. Commit the change
-3. Proceed with worktree creation
-
-**Why critical:** Prevents accidentally committing worktree contents to repository.
-
-### For Global Directory (~/.config/superpowers/worktrees)
-
-No .gitignore verification needed - outside project entirely.
-
-## Creation Steps
-
-### 1. Detect Project Name
-
-```bash
-project=$(basename "$(git rev-parse --show-toplevel)")
-```
-
-### 2. Create Worktree
-
-```bash
-# Determine full path
-case $LOCATION in
-  .worktrees|worktrees)
-    path="$LOCATION/$BRANCH_NAME"
-    ;;
-  ~/.config/superpowers/worktrees/*)
-    path="~/.config/superpowers/worktrees/$project/$BRANCH_NAME"
-    ;;
-esac
-
-# Create worktree with new branch
-git worktree add "$path" -b "$BRANCH_NAME"
-cd "$path"
-```
-
-### 3. Run Project Setup
-
-Auto-detect and run appropriate setup:
-
-```bash
-# Node.js
-if [ -f package.json ]; then npm install; fi
-
-# Rust
-if [ -f Cargo.toml ]; then cargo build; fi
-
-# Python
-if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-if [ -f pyproject.toml ]; then poetry install; fi
-
-# Go
-if [ -f go.mod ]; then go mod download; fi
-```
-
-### 4. Verify Clean Baseline
-
-Run tests to ensure worktree starts clean:
-
-```bash
-# Examples - use project-appropriate command
-npm test
-cargo test
-pytest
-go test ./...
-```
-
-**If tests fail:** Report failures, ask whether to proceed or investigate.
-
-**If tests pass:** Report ready.
-
-### 5. Report Location
-
-```
-Worktree ready at <full-path>
-Tests passing (<N> tests, 0 failures)
-Ready to implement <feature-name>
-```
-
-## Quick Reference
-
-| Situation | Action |
-|-----------|--------|
-| `.worktrees/` exists | Use it (verify ignored) |
-| `worktrees/` exists | Use it (verify ignored) |
-| Both exist | Use `.worktrees/` |
-| Neither exists | Check CLAUDE.md → Ask user |
-| Directory not ignored | Add to .gitignore + commit |
-| Tests fail during baseline | Report failures + ask |
-| No package.json/Cargo.toml | Skip dependency install |
-
-## Common Mistakes
-
-### Skipping ignore verification
-
-- **Problem:** Worktree contents get tracked, pollute git status
-- **Fix:** Always use `git check-ignore` before creating project-local worktree
-
-### Assuming directory location
-
-- **Problem:** Creates inconsistency, violates project conventions
-- **Fix:** Follow priority: existing > CLAUDE.md > ask
-
-### Proceeding with failing tests
-
-- **Problem:** Can't distinguish new bugs from pre-existing issues
-- **Fix:** Report failures, get explicit permission to proceed
-
-### Hardcoding setup commands
-
-- **Problem:** Breaks on projects using different tools
-- **Fix:** Auto-detect from project files (package.json, etc.)
-
-## Example Workflow
-
-```
-You: I'm using the using-git-worktrees skill to set up an isolated workspace.
-
-[Check .worktrees/ - exists]
-[Verify ignored - git check-ignore confirms .worktrees/ is ignored]
-[Create worktree: git worktree add .worktrees/auth -b feature/auth]
-[Run npm install]
-[Run npm test - 47 passing]
-
-Worktree ready at /Users/jesse/myproject/.worktrees/auth
-Tests passing (47 tests, 0 failures)
-Ready to implement auth feature
-```
+This is broader than "always create a new worktree", so the old name is no longer the preferred concept.
 
 ## Red Flags
 
 **Never:**
-- Create worktree without verifying it's ignored (project-local)
-- Skip baseline test verification
-- Proceed with failing tests without asking
-- Assume directory location when ambiguous
-- Skip CLAUDE.md check
+
+- add new workflow references to this deprecated skill
+- keep a second full procedure here that can drift from `ensure-isolated-workspace`
+- assume the user wants a new worktree in every environment
 
 **Always:**
-- Follow directory priority: existing > CLAUDE.md > ask
-- Verify directory is ignored for project-local
-- Auto-detect and run project setup
-- Verify clean test baseline
+
+- route new logic through `ensure-isolated-workspace`
+- keep older prompts working
+- make the compatibility behavior explicit
 
 ## Integration
 
 **Called by:**
-- **brainstorming** (Phase 4) - REQUIRED when design is approved and implementation follows
-- **subagent-driven-development** - REQUIRED before executing any tasks
-- **executing-plans** - REQUIRED before executing any tasks
-- Any skill needing isolated workspace
+
+- Older prompts, plans, and docs that still name this skill directly
 
 **Pairs with:**
-- **finishing-a-development-branch** - REQUIRED for cleanup after work complete
+
+- **ensure-isolated-workspace** - Authoritative workspace-selection policy
